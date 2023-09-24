@@ -88,7 +88,7 @@ class Node final
     std::vector<Reference> m_nonHierachicalRefs{};
 };
 
-class MyNamespace
+class Namespace
 {
   public:
     void addNode(const NL_Node *node) { m_nodes.emplace_back(node); }

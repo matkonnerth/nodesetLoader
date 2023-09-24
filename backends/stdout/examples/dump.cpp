@@ -27,53 +27,9 @@ static char *printId(const UA_NodeId *id)
 
 unsigned short addNamespace(void *userContext, const char *uri) { return 1; }
 
-
+nodesetLoader::Namespace myNamespace{};
 
 void dumpNode(void *userContext, const NL_Node *node)
 {
-    printf("NodeId: %s BrowseName: %s DisplayName: %s\n", printId(&node->id),
-           node->browseName.name, node->displayName.text);
-
-    switch (node->nodeClass)
-    {
-    case NODECLASS_OBJECT:
-        printf("\tparentNodeId: %s\n",
-               printId(&((const NL_ObjectNode *)node)->parentNodeId));
-        printf("\teventNotifier: %s\n",
-               ((const NL_ObjectNode *)node)->eventNotifier);
-        break;
-    case NODECLASS_VARIABLE:
-        printf("\tparentNodeId: %s\n",
-               printId(&((const NL_VariableNode *)node)->parentNodeId));
-        printf("\tdatatype: %s\n",
-               printId(&((const NL_VariableNode *)node)->datatype));
-        printf("\tvalueRank: %s\n", ((const NL_VariableNode *)node)->valueRank);
-        printf("\tarrayDimensions: %s\n",
-               ((const NL_VariableNode *)node)->valueRank);
-        break;
-    case NODECLASS_OBJECTTYPE:
-        break;
-    case NODECLASS_DATATYPE:
-        break;
-    case NODECLASS_METHOD:
-        break;
-    case NODECLASS_REFERENCETYPE:
-    case NODECLASS_VARIABLETYPE:
-        break;
-    }
-    NL_Reference *hierachicalRef = node->hierachicalRefs;
-    while (hierachicalRef)
-    {
-        printf("\treftype: %s", printId(&hierachicalRef->refType));
-        printf(" target: %s\n", printId(&hierachicalRef->target));
-        hierachicalRef = hierachicalRef->next;
-    }
-
-    NL_Reference *nonHierRef = node->nonHierachicalRefs;
-    while (nonHierRef)
-    {
-        printf("\treftype: %s", printId(&nonHierRef->refType));
-        printf(" target: %s\n", printId(&nonHierRef->target));
-        nonHierRef = nonHierRef->next;
-    }
+    myNamespace.addNode(node);
 }
