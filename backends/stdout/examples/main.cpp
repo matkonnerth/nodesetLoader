@@ -8,6 +8,7 @@
 #include "backend.h"
 #include <stdio.h>
 #include <string.h>
+#include "Node.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,10 +18,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int maxValueRank = -1;
+    nodesetLoader::Namespace myNamespace{};
+
     NL_FileContext handler;
     handler.addNamespace = addNamespace;
-    handler.userContext = &maxValueRank;
+    handler.userContext = nullptr;
 
     NodesetLoader *loader = NodesetLoader_new(NULL, NULL);
 
@@ -38,11 +40,14 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < NL_NODECLASS_COUNT; i++)
     {
-        NodesetLoader_forEachNode(loader, (NL_NodeClass)i, NULL, (NodesetLoader_forEachNode_Func)dumpNode);
+        NodesetLoader_forEachNode(loader, (NL_NodeClass)i, &myNamespace, (NodesetLoader_forEachNode_Func)dumpNode);
     }
 
-    NodesetLoader_delete(loader);
+    nodesetLoader::HierachicalVisitor v{myNamespace};
 
-    printf("maxValue Rank: %d", maxValueRank);
+    //visit zone type
+    v.visit(UA_NODEID_NUMERIC(1, 1006));
+
+    NodesetLoader_delete(loader);
     return 0;
 }

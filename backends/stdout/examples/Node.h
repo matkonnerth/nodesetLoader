@@ -1,3 +1,9 @@
+#include <string>
+#include <vector>
+#include <optional>
+#include <algorithm>
+#include <iostream>
+
 namespace nodesetLoader
 {
 
@@ -13,6 +19,11 @@ class Reference
     const UA_NodeId &ReferenceType() const { return m_refType; }
 
     const UA_NodeId &Target() const { return m_target; }
+
+    bool IsForward() const
+    {
+        return m_isForward;
+    }
 
   private:
     bool m_isForward;
@@ -37,6 +48,7 @@ class Node final
     }
 
     const std::string &BrowseName() const { return m_browseName; }
+    const UA_NodeId& Id() const { return m_id;}
 
     std::optional<UA_NodeId> TypeDefinitionId() const
     {
@@ -58,6 +70,11 @@ class Node final
         {
             return it->Target();
         }
+    }
+
+    const std::vector<Reference>& HierachicalRefs() const
+    {
+        return m_hierachicalRefs;
     }
 
   private:
@@ -88,13 +105,56 @@ class Node final
     std::vector<Reference> m_nonHierachicalRefs{};
 };
 
+using OptionalNodeRef = std::optional<std::reference_wrapper<const Node>>;
+
 class Namespace
 {
   public:
     void addNode(const NL_Node *node) { m_nodes.emplace_back(node); }
 
+    const OptionalNodeRef getNode(const UA_NodeId& id) const
+    {
+        auto it =
+            std::find_if(m_nodes.begin(),
+                         m_nodes.end(), [&id](const Node &n) {
+                             return UA_NodeId_equal(&id,
+                                                    &n.Id());
+                         });
+
+        if (it != m_nodes.end())
+        {
+            return *it;
+        }
+        return std::nullopt;
+    }
+
   private:
     std::vector<Node> m_nodes{};
+};
+
+class HierachicalVisitor
+{
+public:
+    HierachicalVisitor(const Namespace& ns): m_ns{ns}{}
+
+    void visit(const UA_NodeId& id)
+    {
+        auto node = m_ns.getNode(id);
+        if(node)
+        {
+            std::cout << node->get().BrowseName() << "\n";
+            for(const auto& ref : node->get().HierachicalRefs())
+            {
+                if(ref.IsForward())
+                {
+                    visit(ref.Target());
+                }
+            }
+        }
+    }
+
+private:
+    const Namespace& m_ns;
 };
 
 } // namespace nodesetLoader
